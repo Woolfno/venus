@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "venus"
+version = "0.1.0"
+description = ""
+authors = ["Woolf <woolf.no1@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "3.10"
+fastapi = "^0.75.0"
+uvicorn = "^0.17.6"
+tortoise-orm = "^0.18.1"
+asyncpg = "^0.25.0"
+fastapi-admin = "^1.0.3"
+aioredis = "^2.0.1"
+
+[tool.poetry.dev-dependencies]
+autopep8 = "^1.6.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
