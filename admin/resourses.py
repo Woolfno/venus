@@ -2,14 +2,18 @@ from typing import List
 
 from fastapi_admin.app import app
 from fastapi_admin.enums import Method
-from fastapi_admin.resources import (Action, Field, Link, Model, Dropdown,
-                                     ToolbarAction)
+from fastapi_admin.resources import (Action, Field, Link, Model, Field,
+                                     Dropdown, ToolbarAction)
 from fastapi_admin.widgets import displays, filters, inputs
+from fastapi_admin.file_upload import FileUpload
 from starlette.requests import Request
 
 from admin.models import Admin
-from models import Device, Customer, DeviceInField, Order
+from core.models import Device, Customer, Order, Contact, Nomenclatura
+from settings import settings
 
+
+upload = FileUpload(uploads_dir=settings.BASE_DIR/'upload')
 
 @app.register
 class Dashboard(Link):
@@ -63,11 +67,11 @@ class AdminResource(Model):
 
 @app.register
 class Content(Dropdown):    
-    class DevicesRecource(Model):
-        label = 'Устройства'
-        model = Device
+    class NomenclaturaRecource(Model):
+        label = 'Номенклатура'
+        model = Nomenclatura
         icon = 'ti ti-server'
-        page_title = 'Список устройств'
+        page_title = 'Справочник оборудования'
         fields = ['monufacturer', 'model',]
         filters = [
             filters.Search(
@@ -78,30 +82,18 @@ class Content(Dropdown):
                 name='model', label='Модель', search_mode='contains'
             ),
         ]
-        
-        async def get_toolbar_actions(self, request: Request) -> List[ToolbarAction]:
-            toolbar_actions = await super().get_toolbar_actions(request)
-            toolbar_actions.append(
-                ToolbarAction(
-                    label='ToolbarAction',
-                    icon='ti ti-toggle-left',
-                    name='toolbar_action',
-                    method=Method.PATCH,
-                )
-            )
-            return toolbar_actions
-        
-        async def get_actions(self, request: Request) -> List[Action]:
-            actions = await super().get_actions(request)
-            switch_status = Action(
-                label="Switch Status",
-                icon="ti ti-toggle-left",
-                name="switch_status",
-                method=Method.PUT,
-            )
-            actions.append(switch_status)
-            return actions
 
+    class ContactResource(Model):
+        label = 'Контакты'
+        icon = ''
+        model = Contact
+        page_title = 'Список контактов'
+        fields = ['name', 'phone_number', 'email', 'customer']
+        filters = [
+            filters.Search(name='name', label='ФИО', search_mode='contains'),
+            filters.Search(name='email', label='email', search_mode='contains'),
+        ]
+    
     class CustomerResource(Model):
         label = 'Контрагенты'
         icon = 'fas fa-address-card'
@@ -113,15 +105,24 @@ class Content(Dropdown):
             filters.Search(name='city', label='Город', search_mode='contains'),
         ]
 
-    class DeviceInFieldResource(Model):
-        label = 'Оборудование в полях'
+    class DeviceResource(Model):
+        label = 'Оборудование'
         icon = 'ti ti-signal'
-        model = DeviceInField
+        model = Device
         page_title = 'Список оборудования'
-        fields = ['serial_number', 'customer', 'analyzer', 'owner_status']
+        fields = ['serial_number', 'customer', 'analyzer', 
+                  'owner_status', 'year', 'comment', 
+                  Field(
+                      name='file',
+                      label='file',                      
+                      input_=inputs.Image(null=True, upload=upload)
+                  ),
+                ]
         filters = [
             filters.Search(name='serial_number', label='Серийный номер', 
                            search_mode='contains'),
+            filters.Search(name='year', label='Год выпуска', 
+                           search_mode='equal'),
         ]
 
     class OrderResource(Model):
@@ -141,6 +142,6 @@ class Content(Dropdown):
     
     label = 'Контент'
     icon = "fas fa-bars"
-    resources = (DevicesRecource, CustomerResource, 
-                 DeviceInFieldResource, OrderResource)
+    resources = (NomenclaturaRecource, CustomerResource, ContactResource,
+                 DeviceResource, OrderResource)
     

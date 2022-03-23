@@ -12,6 +12,7 @@ tortoise-orm = "^0.18.1"
 asyncpg = "^0.25.0"
 fastapi-admin = "^1.0.3"
 aioredis = "^2.0.1"
+aiofiles = "^0.8.0"
 
 [tool.poetry.dev-dependencies]
 autopep8 = "^1.6.0"

@@ -29,7 +29,7 @@ admin_app.add_exception_handler(HTTP_403_FORBIDDEN, forbidden_error_exception)
 admin_app.add_exception_handler(
     HTTP_401_UNAUTHORIZED, unauthorized_error_exception)
 
-app = FastAPI(title="Tortoise ORM FastAPI")
+app = FastAPI(title="Venus")
 
 app.add_middleware(
     CORSMiddleware,
@@ -46,7 +46,7 @@ app.include_router(router)
 register_tortoise(
     app,
     db_url=settings.DATABASE_URL,
-    modules={"models": ["models", 'admin.models']},
+    modules={"models": ["core.models", 'admin.models', 'user.models',]},
     generate_schemas=True,
     add_exception_handlers=True,
 )
