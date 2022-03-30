@@ -31,6 +31,7 @@ class Customer(BaseModel):
         return f'"{self.name}" - {self.address}'
     
 class Contact(BaseModel):
+    '''Контакты организации'''
     name = fields.CharField(max_length=255)
     phone_number = fields.CharField(max_length=128)
     email = fields.CharField(max_length=32)
