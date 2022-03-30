@@ -1,7 +1,9 @@
 import json
-from tortoise.contrib.pydantic import pydantic_model_creator, PydanticModel
+
 from pydantic import BaseModel
-from core.models import Device, Customer, Order, Contact, Nomenclatura
+from tortoise.contrib.pydantic import pydantic_model_creator
+
+from core.models import Customer, Device, Nomenclatura, Order
 
 
 Nomenclatura_Pydantic = pydantic_model_creator(Nomenclatura, name='Nomenclatura')
@@ -35,8 +37,4 @@ Order_Pydantic = pydantic_model_creator(Order, name='Order')
 class OrderIn(BaseModel):
     device_id: int
     description: str
-    status: str
-
-
-class Simple(BaseModel):
-    name:str
+    status: str|None
