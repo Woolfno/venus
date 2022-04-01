@@ -19,6 +19,7 @@ from starlette.status import (
 from tortoise.contrib.fastapi import register_tortoise
 
 from routes import router
+from user import router as user_router
 from settings import settings
 
 
@@ -42,6 +43,7 @@ app.add_middleware(
 
 app.mount('/admin', admin_app)
 app.include_router(router)
+app.include_router(user_router)
 
 register_tortoise(
     app,
