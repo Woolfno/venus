@@ -20,6 +20,7 @@ from tortoise.contrib.fastapi import register_tortoise
 
 from routes import router
 from user import router as user_router
+from auth import router as auth_router
 from settings import settings
 
 
@@ -44,7 +45,8 @@ app.add_middleware(
 app.mount('/admin', admin_app)
 app.include_router(router)
 app.include_router(user_router)
-
+app.include_router(auth_router
+                   )
 register_tortoise(
     app,
     db_url=settings.DATABASE_URL,

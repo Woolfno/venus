@@ -1,22 +1,29 @@
-from collections import namedtuple
+from auth.utils import get_password_hash
 from tempfile import NamedTemporaryFile
 from typing import IO
 from PIL import Image
-import aiofiles
 import shutil
-from fastapi import Depends, File, HTTPException, Request, UploadFile, Header
+from fastapi import Depends, File, HTTPException, UploadFile, Header
 from starlette import status
 from fastapi.routing import APIRouter
 from settings import settings
 from user import models
-from user import schemas
+from user import schemes
+from auth.securety import get_current_user
+from user.service import BaseService, UserService
 
 
-router = APIRouter(prefix='/users', tags=['User',])
+router = APIRouter(prefix='/users', tags=['User', ])
 
-@router.get('/', response_model=list[schemas.User])
+
+@router.get("/me", response_model=schemes.User)
+async def read_users_me(current_user: schemes.User = Depends(get_current_user)):
+    return current_user
+
+
+@router.get('/', response_model=list[schemes.User])
 async def get_users():
-    return await schemas.User.from_queryset(models.User.all())
+    return await schemes.User.from_queryset(models.User.all())
 
 # async def save_file(prefix_name: str, file: File) -> str:
 #     path = settings.MEDIA_ROOT.joinpath('avatars',
@@ -26,24 +33,25 @@ async def get_users():
 #         await f.write(content)
 #     return path
 
-async def save_file(prefix_name:str, file:UploadFile, file_size:int):
+
+async def save_file(prefix_name: str, file: UploadFile, file_size: int):
     real_file_size = 0
-    tmp:IO = NamedTemporaryFile(delete=False)
+    tmp: IO = NamedTemporaryFile(delete=False)
     for chunk in file.file:
         real_file_size += len(chunk)
-        if real_file_size>file_size:
+        if real_file_size > file_size:
             raise HTTPException(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                 detail='File too large')
         tmp.write(chunk)
     tmp.close()
     path = settings.MEDIA_ROOT.joinpath('avatars',
-                                         ''.join((prefix_name, file.filename)))
+                                        ''.join((prefix_name, file.filename)))
     shutil.move(tmp.name, path)
     return path
 
 
-def is_image(file_path:str)->bool:
+def is_image(file_path: str) -> bool:
     try:
         Image.open(file_path)
     except IOError:
@@ -51,20 +59,23 @@ def is_image(file_path:str)->bool:
     return True
 
 
-async def valid_content_length(content_length: int = Header(..., lt=1_050_000)): #1MB
+async def valid_content_length(content_length: int = Header(..., lt=1_050_000)):  # 1MB
     return content_length
 
 
-@router.post('/', response_model=schemas.User)
-async def create_user(user:schemas.UserCreate):
-    obj = await models.User.create(**user.dict(exclude_unset=True))
-    return schemas.User.from_orm(obj)
+@router.post('/', response_model=schemes.User)
+async def create_user(user: schemes.UserCreate, 
+                      service:BaseService=Depends(UserService)
+):    
+    obj = await service.create(user)
+    return schemes.User.from_orm(obj)
+
 
 @router.post('/{id}/avatar')
 async def set_avatar(
-    id:int,
-    file:UploadFile=File(...),
-    file_size:int=Depends(valid_content_length)
+    id: int,
+    file: UploadFile = File(...),
+    file_size: int = Depends(valid_content_length)
 ):
     path = await save_file(f'user_id_{id}', file, file_size)
     if not is_image(path):
@@ -75,8 +86,11 @@ async def set_avatar(
     await models.User.filter(id=id).update(avatar=path)
     return {'message': 'ok'}
 
-@router.put('/{id}', response_model=schemas.User)
-async def update_user(id:int, user:schemas.UserUpdate):
-    await models.User.filter(id=id).update(**user.dict(exclude_unset=True))
-    obj = await models.User.get(id=id)
-    return schemas.User.from_queryset_single(obj)
+
+@router.put('/', response_model=schemes.User)
+async def update_user(user: schemes.UserUpdate,
+                      current_user:models.User=Depends(get_current_user)):
+    user.password = get_password_hash(user.password)    
+    await models.User.filter(id=current_user.id).update(**user.dict(exclude_unset=True))
+    current_user = await models.User.get(id=current_user.id)
+    return current_user
