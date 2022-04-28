@@ -1,17 +1,17 @@
-from auth.utils import get_password_hash
+import shutil
 from tempfile import NamedTemporaryFile
 from typing import IO
-from PIL import Image
-import shutil
-from fastapi import Depends, File, HTTPException, UploadFile, Header
-from starlette import status
-from fastapi.routing import APIRouter
-from settings import settings
-from user import models
-from user import schemes
-from auth.securety import get_current_user
-from user.service import BaseService, UserService
 
+from auth.securety import get_current_user
+from auth.utils import get_password_hash
+from fastapi import Depends, File, Header, HTTPException, UploadFile
+from fastapi.routing import APIRouter
+from PIL import Image
+from settings import settings
+from starlette import status
+
+from user import models, schemes
+from user.service import BaseService, UserService
 
 router = APIRouter(prefix='/users', tags=['User', ])
 
@@ -64,9 +64,9 @@ async def valid_content_length(content_length: int = Header(..., lt=1_050_000)):
 
 
 @router.post('/', response_model=schemes.User)
-async def create_user(user: schemes.UserCreate, 
-                      service:BaseService=Depends(UserService)
-):    
+async def create_user(user: schemes.UserCreate,
+                      service: BaseService = Depends(UserService)
+                      ):
     obj = await service.create(user)
     return schemes.User.from_orm(obj)
 
@@ -89,8 +89,8 @@ async def set_avatar(
 
 @router.put('/', response_model=schemes.User)
 async def update_user(user: schemes.UserUpdate,
-                      current_user:models.User=Depends(get_current_user)):
-    user.password = get_password_hash(user.password)    
+                      current_user: models.User = Depends(get_current_user)):
+    user.password = get_password_hash(user.password)
     await models.User.filter(id=current_user.id).update(**user.dict(exclude_unset=True))
     current_user = await models.User.get(id=current_user.id)
     return current_user

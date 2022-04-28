@@ -6,10 +6,10 @@ from core.schemas import (Customer_Pydantic, CustomerIn_Pydantic,
                           Device_Pydantic, DeviceIn, DeviceList,
                           Nomenclatura_Pydantic, NomenclaturaIn_Pydantic,
                           Order_Pydantic, OrderIn)
-from service import (BaseService, CustomerService, DeviceService,
-                     NomenclaturaService, OrderService)
+from core.service import (BaseService, CustomerService, DeviceService,
+                          NomenclaturaService, OrderService)
 
-router = APIRouter(prefix='')
+router = APIRouter(prefix='', tags=['Venus', ])
 
 
 def set_total_count(response: Response, total_count: int):
