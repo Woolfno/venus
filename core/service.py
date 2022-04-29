@@ -1,7 +1,9 @@
+from datetime import datetime
 import aiofiles
 from base.service import BaseService
-from fastapi import File, UploadFile
+from fastapi import File, HTTPException, UploadFile, status
 from pydantic import BaseModel
+from core.schemas import Order_Pydantic
 from settings import settings
 from tortoise.contrib.pydantic import PydanticModel
 from tortoise.models import Model
@@ -38,7 +40,15 @@ class CustomerService(BaseService):
 
 class OrderService(BaseService):
     model = Order
-
+    
+    async def update(self, id: int, data: BaseModel | PydanticModel, **kwargs):
+        # data.last_update_at = datetime.utcnow()
+        r = await self.model.filter(id=id).update(
+                                **data.dict(exclude_unset=True),
+                                last_update_at = datetime.utcnow())        
+        if r==0:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        return await self.model.get(id=id)
 
 class NomenclaturaService(BaseService):
     model = Nomenclatura

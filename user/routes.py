@@ -3,7 +3,6 @@ from tempfile import NamedTemporaryFile
 from typing import IO
 
 from auth.securety import get_current_user
-from auth.utils import get_password_hash
 from fastapi import Depends, File, Header, HTTPException, UploadFile
 from fastapi.routing import APIRouter
 from PIL import Image
@@ -71,26 +70,24 @@ async def create_user(user: schemes.UserCreate,
     return schemes.User.from_orm(obj)
 
 
-@router.post('/{id}/avatar')
+@router.post('/avatar')
 async def set_avatar(
-    id: int,
     file: UploadFile = File(...),
-    file_size: int = Depends(valid_content_length)
+    file_size: int = Depends(valid_content_length),
+    current_user:models.User=Depends(get_current_user)
 ):
-    path = await save_file(f'user_id_{id}', file, file_size)
+    path = await save_file(f'user_id_{current_user.id}', file, file_size)
     if not is_image(path):
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             detail='File is not image'
         )
-    await models.User.filter(id=id).update(avatar=path)
+    await models.User.filter(id=current_user.id).update(avatar=path)
     return {'message': 'ok'}
 
 
 @router.put('/', response_model=schemes.User)
 async def update_user(user: schemes.UserUpdate,
+                      service:BaseService=Depends(UserService),
                       current_user: models.User = Depends(get_current_user)):
-    user.password = get_password_hash(user.password)
-    await models.User.filter(id=current_user.id).update(**user.dict(exclude_unset=True))
-    current_user = await models.User.get(id=current_user.id)
-    return current_user
+    return await service.update(current_user.id, user)

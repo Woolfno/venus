@@ -22,3 +22,14 @@ class BaseService:
 
     async def create(self, data: BaseModel | PydanticModel, **kwargs) -> Model:
         return await self.model.create(**data.dict(exclude_unset=True))
+    
+    async def update(self, id:int, data:BaseModel | PydanticModel, **kwargs) ->Model:
+        await self.model.filter(id=id).update(**data.dict(exclude_unset=True))
+        return await self.get(id)
+    
+    async def delete(self, id:int) ->bool:
+        obj = await self.get(id)
+        if obj:
+            await self.model.filter(id=id).delete()
+            return True
+        return False

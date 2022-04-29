@@ -38,3 +38,8 @@ class OrderIn(BaseModel):
     device_id: int
     description: str
     status: str|None
+    
+class OrderUpdate(BaseModel):
+    device_id:int|None
+    description: str|None
+    status: str|None

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Body, Depends, File, Response, UploadFile
 from core.schemas import (Customer_Pydantic, CustomerIn_Pydantic,
                           Device_Pydantic, DeviceIn, DeviceList,
                           Nomenclatura_Pydantic, NomenclaturaIn_Pydantic,
-                          Order_Pydantic, OrderIn)
+                          Order_Pydantic, OrderIn, OrderUpdate)
 from core.service import (BaseService, CustomerService, DeviceService,
                           NomenclaturaService, OrderService)
 
@@ -89,6 +89,10 @@ async def create_order(order: OrderIn, service: BaseService = Depends(OrderServi
     obj = await service.create(order)
     return await Order_Pydantic.from_tortoise_orm(obj)
 
+@router.put('/orders/{id}', response_model=Order_Pydantic)
+async def update_order(id:int, order:OrderUpdate, service:BaseService=Depends(OrderService)):
+    obj = await service.update(id, order)
+    return await Order_Pydantic.from_tortoise_orm(obj)
 
 @router.get('/nomenclatura', response_model=List[Nomenclatura_Pydantic])
 async def get_nomenclatura(
